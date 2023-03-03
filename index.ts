@@ -2,19 +2,33 @@ const ConcatSource = require('webpack-sources').ConcatSource
 const { flow, get } = require('lodash')
 const execSync = require('child_process').execSync
 const dayjs = require('dayjs')
-
-export default function CreateVersionRecord(setting) {
-    const { name, isFileAdd, getString } = Object.assign({}, setting)
+type ISetting = {
+    name?: String,
+    isFileAdd?: (fileName: String) => Boolean,
+    getString?: (branchName: string, commitId: String, tag: String, date: String) => String
+}
+type IStringer = (s: String) => string
+export default function CreateVersionRecord(setting: ISetting | undefined) {
+    const defaultConfig: ISetting = {
+        name: 'VersionRecord',
+        isFileAdd(name) {
+            return name.includes('mian')
+        },
+        getString(branchName, commitId, tag, date) {
+            return `${branchName}-${commitId}-${tag}-${date}`
+        }
+    }
+    const { name, isFileAdd, getString } = Object.assign(defaultConfig, setting) as Required<ISetting>
     class VersionRecord {
-        apply(compiler) {
-            compiler.hooks.compilation.tap(name, compilation => {
-                compilation.hooks.optimizeChunkAssets.tap(name, chunks => {
+        apply(compiler: any) {
+            compiler.hooks.compilation.tap(name, (compilation: any) => {
+                compilation.hooks.optimizeChunkAssets.tap(name, (chunks: any) => {
                     let isAdd = false
-                    chunks.forEach(chunk => {
+                    chunks.forEach((chunk: any) => {
                         if (isAdd) {
                             return
                         }
-                        chunk.files.forEach(fileName => {
+                        chunk.files.forEach((fileName: string) => {
                             if (isAdd) {
                                 return
                             }
@@ -33,7 +47,7 @@ export default function CreateVersionRecord(setting) {
     }
     return VersionRecord
 }
-function getVersionInfo() {
+function getVersionInfo(): [string, string, string, string] {
     const branchName = getBranchName()
     const commitId = getCommitID()
     const tag = getTag()
@@ -41,26 +55,26 @@ function getVersionInfo() {
     return [branchName, commitId, tag, date]
 }
 // 获取当前分支名
-function getBranchName() {
+function getBranchName(): string {
     const branchList = execSync('git branch').toString()
-    const split = s => s.split('\n')
-    const filter = s => s.filter(item => item.includes('*'))[0]
-    const replace = s => s.replace('* ', '')
+    const split: (s: string) => Array<string> = s => s.split('\n')
+    const filter: (s: Array<string>) => string = s => s.filter(item => item.includes('*'))[0]
+    const replace: IStringer = s => s.replace('* ', '')
     return flow(split, filter, replace)(branchList)
 }
 // 获取当前commitId
-function getCommitID() {
+function getCommitID(): string {
     const idList = execSync('git log -1').toString()
-    const split = s => s.split('\n')
-    const filter = s => s.filter(item => item.includes('commit'))[0]
-    const replaceStart = s => s.replace('commit ', '')
-    const replaceEnd = s => s.replace(' .*', '')
+    const split: (s: string) => Array<string> = s => s.split('\n')
+    const filter: (s: Array<string>) => string = s => s.filter(item => item.includes('commit'))[0]
+    const replaceStart: IStringer = s => s.replace('commit ', '')
+    const replaceEnd: IStringer = s => s.replace(' .*', '')
     return flow(split, filter, replaceStart, replaceEnd)(idList)
 }
 // 获取tag
-function getTag() {
+function getTag(): string {
     const list = execSync('git tag ').toString()
-    const split = s => s.split('\n')
-    const getFirst = s => get(s, 0, 'null')
+    const split: (s: string) => Array<string> = s => s.split('\n')
+    const getFirst: (s: string) => string = s => get(s, 0, 'null')
     return flow(split, getFirst)(list)
 }
