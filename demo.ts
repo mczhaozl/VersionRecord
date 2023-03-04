@@ -14,7 +14,9 @@ type ISetting = {
     // window 的哪一个key 记录属性值
     valueKey?: String,
     // window[valueKey] = getString()
-    getString?: (branchName: string, commitId: String, tag: String, date: String) => String
+    getString?: (branchName: string, commitId: String, tag: String, date: String) => String,
+    // 在何种开放环境下进行替换
+    checkEnvironment?: Array<String> | String | Boolean 
 }
 const config: ISetting | undefined = {
     getString(branchName: string, commitId: String, tag: String, date: String){
