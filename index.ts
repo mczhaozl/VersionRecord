@@ -5,7 +5,8 @@ const dayjs = require('dayjs')
 type ISetting = {
     name?: String,
     isFileAdd?: (fileName: String) => Boolean,
-    getString?: (branchName: string, commitId: String, tag: String, date: String) => String
+    getString?: (branchName: string, commitId: String, tag: String, date: String) => String,
+    valueKey?: String
 }
 type IStringer = (s: String) => string
 export default function CreateVersionRecord(setting: ISetting | undefined) {
@@ -16,7 +17,8 @@ export default function CreateVersionRecord(setting: ISetting | undefined) {
         },
         getString(branchName, commitId, tag, date) {
             return `${branchName}-${commitId}-${tag}-${date}`
-        }
+        },
+        valueKey:'version'
     }
     const { name, isFileAdd, getString } = Object.assign(defaultConfig, setting) as Required<ISetting>
     class VersionRecord {
@@ -35,7 +37,7 @@ export default function CreateVersionRecord(setting: ISetting | undefined) {
                             if (isFileAdd(fileName)) {
                                 compilation.assets[fileName] = new ConcatSource(
                                     compilation.assets[fileName],
-                                    `;${getString(...getVersionInfo())}`
+                                    `;window[${valueKey}]${getString(...getVersionInfo())}`
                                 )
                                 isAdd = true
                             }
