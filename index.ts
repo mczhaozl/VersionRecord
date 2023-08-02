@@ -87,7 +87,7 @@ function getTag(): string {
 
 
 // 
-function LimitEnvironment(checkEnvironment) {
+function LimitEnvironment(checkEnvironment: ISetting['checkEnvironment']) {
     const cancel = function (target, name, descriptor) {
         return { ...descriptor, value() { } }
     }
